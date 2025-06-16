@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatSchedule, type FormatScheduleInput } from '@/ai/flows/format-schedule';
+import { getUserSchedule, type GetUserScheduleInput } from '@/ai/flows/get-user-schedule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -10,8 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CalendarDays, Bell, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-
-const MOCK_SCHEDULE_RAW = "10:00 AM - 11:00 AM: Project Standup Meeting (Zoom) - Discuss progress and blockers., 1:00 PM - 2:00 PM: Client Call with Acme Corp (Google Meet) - Present Q3 results., 3:00 PM - 3:30 PM: Quick Sync with Design Team - Review new mockups., 4:00 PM - 5:00 PM: Code Review Session - PR #123 & #124.";
+import Link from 'next/link'; // Import NextLink
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -35,18 +35,16 @@ export default function DashboardPage() {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // In a real scenario, you'd fetch data using user.apiKey here
-      // For now, we use mock data.
-      const scheduleInput: FormatScheduleInput = { schedule: MOCK_SCHEDULE_RAW };
-      const result = await formatSchedule(scheduleInput);
+      const scheduleInput: GetUserScheduleInput = { apiKey: user.apiKey };
+      const result = await getUserSchedule(scheduleInput);
       setFormattedSchedule(result.formattedSchedule);
     } catch (error) {
-      console.error('Error formatting schedule:', error);
+      console.error('Error getting user schedule:', error);
       setFormattedSchedule('Could not load or format schedule.');
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to format schedule. Please try again.",
+        description: "Failed to get or format schedule. Please try again.",
       });
     } finally {
       setIsLoadingSchedule(false);
@@ -191,8 +189,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-// Helper Link component for use inside CardContent (client component)
-const Link = ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
-  <a href={href} className={className}>{children}</a>
-);
