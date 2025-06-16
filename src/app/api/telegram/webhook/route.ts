@@ -1,7 +1,9 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { getUserSchedule, type GetUserScheduleInput } from '@/ai/flows/get-user-schedule';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const GOOGLE_CALENDAR_API_KEY = process.env.GOOGLE_CALENDAR_API_KEY;
 const TELEGRAM_API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 interface TelegramMessage {
@@ -28,27 +30,29 @@ interface TelegramMessage {
 interface TelegramUpdate {
   update_id: number;
   message?: TelegramMessage;
-  // Add other update types if needed, e.g., callback_query
 }
 
-async function sendMessage(chatId: number, text: string) {
+async function sendMessage(chatId: number, text: string, parseMode?: 'MarkdownV2' | 'HTML') {
   if (!BOT_TOKEN) {
     console.error('TELEGRAM_BOT_TOKEN is not set on the server.');
-    // To Telegram, we should still return OK if the token is missing on our end,
-    // to prevent it from endlessly retrying. The issue is on our server configuration.
     return { success: false, error: 'Bot token not configured on server' };
   }
   const url = `${TELEGRAM_API_BASE}/sendMessage`;
+  const body: { chat_id: number; text: string; parse_mode?: string } = {
+    chat_id: chatId,
+    text: text,
+  };
+  if (parseMode) {
+    body.parse_mode = parseMode;
+  }
+
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: text,
-      }),
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       const errorBody = await response.json();
@@ -65,25 +69,44 @@ async function sendMessage(chatId: number, text: string) {
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     console.error('Attempted to handle Telegram webhook, but TELEGRAM_BOT_TOKEN is not set.');
-    // Always return a 200 OK to Telegram to prevent retries if the issue is server-side config.
-    return NextResponse.json({ status: 'ok_server_config_issue' });
+    return NextResponse.json({ status: 'ok_server_config_issue_bot_token' });
   }
 
   try {
     const body = await req.json() as TelegramUpdate;
-    // console.log('Received Telegram update:', JSON.stringify(body, null, 2));
 
     if (body.message && body.message.chat && body.message.text) {
       const message = body.message;
       const chatId = message.chat.id;
-      const text = message.text;
+      const text = message.text.trim();
 
       if (text === '/start') {
-        await sendMessage(chatId, 'Welcome to the Calendar Alert Bot! I am currently under development.\nType /help to see available commands.');
+        await sendMessage(chatId, 'Welcome to the Calendar Alert Bot!\nType /schedule to get your daily agenda.\nType /help to see available commands.');
       } else if (text === '/help') {
-        await sendMessage(chatId, 'Available commands:\n/start - Display a welcome message.\n/help - Show this help message.');
+        await sendMessage(chatId, 'Available commands:\n/start - Display a welcome message.\n/schedule - Get your formatted schedule for today.\n/help - Show this help message.');
+      } else if (text === '/schedule') {
+        if (!GOOGLE_CALENDAR_API_KEY) {
+          console.error('GOOGLE_CALENDAR_API_KEY is not set on the server.');
+          await sendMessage(chatId, 'Sorry, the bot is not properly configured by the admin (missing Calendar API key). Please contact the administrator.');
+          return NextResponse.json({ status: 'ok_server_config_issue_calendar_key' });
+        }
+        
+        await sendMessage(chatId, 'Fetching your schedule, please wait...');
+
+        try {
+          const scheduleInput: GetUserScheduleInput = { apiKey: GOOGLE_CALENDAR_API_KEY };
+          const result = await getUserSchedule(scheduleInput);
+          
+          // The formatSchedule flow should ideally output Markdown.
+          // If it outputs HTML, you might need to adjust parseMode or clean the HTML.
+          // For now, assuming the formatter might use markdown-like syntax that Telegram understands.
+          await sendMessage(chatId, result.formattedSchedule, 'MarkdownV2');
+        } catch (error) {
+          console.error('Error getting user schedule for Telegram:', error);
+          await sendMessage(chatId, 'Sorry, I encountered an error trying to fetch or format your schedule.');
+        }
       } else {
-        // Default response for unrecognised commands or messages
+        // Optional: Respond to unrecognised commands or messages
         // await sendMessage(chatId, `I received your message: "${text}". Use /help for commands.`);
       }
     }
@@ -91,7 +114,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ status: 'ok' });
   } catch (error) {
     console.error('Error processing Telegram update:', error);
-    // Return OK to Telegram to prevent retries for our processing errors
     return NextResponse.json({ status: 'ok_processing_error' });
   }
 }

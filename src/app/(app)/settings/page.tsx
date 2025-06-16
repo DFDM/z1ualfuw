@@ -7,16 +7,17 @@ import * as z from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label'; // Keep Label for general use
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { KeyRound, Smartphone, Save, Bot } from 'lucide-react';
+import { KeyRound, Smartphone, Save, BotIcon, Info } from 'lucide-react'; // Renamed Bot to BotIcon to avoid conflict
 import { useEffect } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const settingsFormSchema = z.object({
   apiKey: z.string().min(10, 'API key must be at least 10 characters long.').optional().or(z.literal('')),
-  phoneNumber: z.string().regex(/^(\+?[1-9]\d{1,14}|\s*)$/, 'Invalid phone number format.').optional().or(z.literal('')), // E.164 format or empty
+  phoneNumber: z.string().regex(/^(\+?[1-9]\d{1,14}|\s*)$/, 'Invalid phone number format. Expected E.164 or empty.').optional().or(z.literal('')),
   telegramBotToken: z.string().min(20, 'Telegram Bot Token must be at least 20 characters long.').optional().or(z.literal('')),
 });
 
@@ -54,15 +55,26 @@ export default function SettingsPage() {
     });
     toast({
       title: 'Settings Updated',
-      description: 'Your settings have been saved.',
+      description: 'Your settings have been saved locally for the admin panel.',
     });
   };
 
   return (
     <div className="space-y-6">
       <h1 className="font-headline text-3xl font-semibold text-foreground">Settings</h1>
+      
+      <Alert variant="default" className="bg-primary/10 border-primary/30">
+        <Info className="h-5 w-5 text-primary" />
+        <AlertTitle className="text-primary font-semibold">Important Configuration Note</AlertTitle>
+        <AlertDescription className="text-primary/90">
+          The settings saved on this page are stored in your browser's local storage for use within this admin panel.
+          For the Telegram bot webhook to function correctly (especially when deployed), the `TELEGRAM_BOT_TOKEN` and `GOOGLE_CALENDAR_API_KEY`
+          must also be set as environment variables on the server where the application is hosted. Please refer to the `README.md` for instructions.
+        </AlertDescription>
+      </Alert>
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card className="shadow-lg">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -70,8 +82,7 @@ export default function SettingsPage() {
                 <div>
                   <CardTitle className="font-headline text-2xl">Google Calendar API Key</CardTitle>
                   <CardDescription>
-                    Enter your Google Calendar API key to allow the bot to access your schedule. 
-                    This key is stored securely.
+                    Enter your Google Calendar API key. This key is used by the dashboard to fetch your schedule and by the Telegram bot.
                   </CardDescription>
                 </div>
               </div>
@@ -93,7 +104,7 @@ export default function SettingsPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Your API key will not be shared and is used solely for retrieving your calendar data.
+                      Ensure the Google Calendar API is enabled for your project and this key has permissions.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -102,14 +113,14 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="mt-6 shadow-lg">
+          <Card className="shadow-lg">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Smartphone className="h-8 w-8 text-accent" />
                 <div>
                   <CardTitle className="font-headline text-2xl">SMS Notification Phone Number</CardTitle>
                   <CardDescription>
-                    Enter your phone number to receive SMS notifications for overdue schedule acknowledgements.
+                    Enter your phone number (E.164 format, e.g., +12345678900) to receive SMS notifications for overdue schedule acknowledgements.
                   </CardDescription>
                 </div>
               </div>
@@ -131,7 +142,7 @@ export default function SettingsPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Include country code (e.g., +1 for USA). SMS charges may apply based on your carrier.
+                      Include country code. SMS charges may apply. This is used by the dashboard's mock SMS feature.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -140,14 +151,14 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="mt-6 shadow-lg">
+          <Card className="shadow-lg">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Bot className="h-8 w-8 text-primary" />
+                <BotIcon className="h-8 w-8 text-primary" /> {}
                 <div>
-                  <CardTitle className="font-headline text-2xl">Telegram Bot Secret Key</CardTitle>
+                  <CardTitle className="font-headline text-2xl">Telegram Bot Token</CardTitle>
                   <CardDescription>
-                    Enter your Telegram Bot Secret Key (Token) for the bot to operate.
+                    Enter your Telegram Bot Token. This token is used to authenticate and control your Telegram bot.
                   </CardDescription>
                 </div>
               </div>
@@ -169,7 +180,7 @@ export default function SettingsPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      This token is used to authenticate and control your Telegram bot. Keep it confidential.
+                      This token is obtained from BotFather on Telegram. Keep it confidential.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
