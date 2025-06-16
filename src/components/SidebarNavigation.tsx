@@ -26,16 +26,17 @@ export function SidebarNavigation() {
       <SidebarMenu>
         {navItems.map((item) => (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href} passHref legacyBehavior>
+            <Link href={item.href} passHref>
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
                 tooltip={{ children: item.label, className:"bg-primary text-primary-foreground" }}
               >
-                <a>
+                {/* The <a> tag is rendered by Link when SidebarMenuButton has asChild */}
+                <>
                   <item.icon />
                   <span>{item.label}</span>
-                </a>
+                </>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -52,3 +53,4 @@ export function SidebarNavigation() {
     </>
   );
 }
+
