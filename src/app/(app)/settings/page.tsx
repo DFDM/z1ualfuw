@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -10,12 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { KeyRound, Smartphone, Save } from 'lucide-react';
+import { KeyRound, Smartphone, Save, Bot } from 'lucide-react';
 import { useEffect } from 'react';
 
 const settingsFormSchema = z.object({
   apiKey: z.string().min(10, 'API key must be at least 10 characters long.').optional().or(z.literal('')),
   phoneNumber: z.string().regex(/^(\+?[1-9]\d{1,14}|\s*)$/, 'Invalid phone number format.').optional().or(z.literal('')), // E.164 format or empty
+  telegramBotToken: z.string().min(20, 'Telegram Bot Token must be at least 20 characters long.').optional().or(z.literal('')),
 });
 
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
@@ -29,6 +31,7 @@ export default function SettingsPage() {
     defaultValues: {
       apiKey: user?.apiKey || '',
       phoneNumber: user?.phoneNumber || '',
+      telegramBotToken: user?.telegramBotToken || '',
     },
   });
   
@@ -37,6 +40,7 @@ export default function SettingsPage() {
       form.reset({
         apiKey: user.apiKey || '',
         phoneNumber: user.phoneNumber || '',
+        telegramBotToken: user.telegramBotToken || '',
       });
     }
   }, [user, form]);
@@ -45,11 +49,12 @@ export default function SettingsPage() {
   const onSubmit: SubmitHandler<SettingsFormValues> = (data) => {
     updateUserSettings({ 
       apiKey: data.apiKey || undefined, 
-      phoneNumber: data.phoneNumber || undefined 
+      phoneNumber: data.phoneNumber || undefined,
+      telegramBotToken: data.telegramBotToken || undefined,
     });
     toast({
       title: 'Settings Updated',
-      description: 'Your API key and phone number have been saved.',
+      description: 'Your settings have been saved.',
     });
   };
 
@@ -66,7 +71,7 @@ export default function SettingsPage() {
                   <CardTitle className="font-headline text-2xl">Google Calendar API Key</CardTitle>
                   <CardDescription>
                     Enter your Google Calendar API key to allow the bot to access your schedule. 
-                    This key is stored securely on your device.
+                    This key is stored securely.
                   </CardDescription>
                 </div>
               </div>
@@ -127,6 +132,44 @@ export default function SettingsPage() {
                     </FormControl>
                     <FormDescription>
                       Include country code (e.g., +1 for USA). SMS charges may apply based on your carrier.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="mt-6 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Bot className="h-8 w-8 text-primary" />
+                <div>
+                  <CardTitle className="font-headline text-2xl">Telegram Bot Secret Key</CardTitle>
+                  <CardDescription>
+                    Enter your Telegram Bot Secret Key (Token) for the bot to operate.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="telegramBotToken"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="telegramBotToken">Bot Token</FormLabel>
+                    <FormControl>
+                      <Input 
+                        id="telegramBotToken" 
+                        type="password" 
+                        placeholder="Enter your Telegram Bot Token" 
+                        {...field} 
+                        className="text-base"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This token is used to authenticate and control your Telegram bot. Keep it confidential.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

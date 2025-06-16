@@ -8,14 +8,15 @@ interface User {
   username: string;
   apiKey?: string;
   phoneNumber?: string;
+  telegramBotToken?: string;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (username: string, apikey?: string, phone?: string) => void;
+  login: (username: string, apikey?: string, phone?: string, telegramBotToken?: string) => void;
   logout: () => void;
-  updateUserSettings: (settings: { apiKey?: string; phoneNumber?: string }) => void;
+  updateUserSettings: (settings: { apiKey?: string; phoneNumber?: string; telegramBotToken?: string }) => void;
   isLoading: boolean;
 }
 
@@ -37,14 +38,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error("Failed to access local storage:", error);
-      // Handle environments where localStorage is not available or restricted
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const login = useCallback((username: string, apiKey?: string, phoneNumber?: string) => {
-    const newUser: User = { username, apiKey, phoneNumber };
+  const login = useCallback((username: string, apiKey?: string, phoneNumber?: string, telegramBotToken?: string) => {
+    const newUser: User = { username, apiKey, phoneNumber, telegramBotToken };
     setIsAuthenticated(true);
     setUser(newUser);
     try {
@@ -68,13 +68,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     router.push('/login');
   }, [router]);
 
-  const updateUserSettings = useCallback((settings: { apiKey?: string; phoneNumber?: string }) => {
+  const updateUserSettings = useCallback((settings: { apiKey?: string; phoneNumber?: string; telegramBotToken?: string }) => {
     if (user) {
       const updatedUser = { ...user, ...settings };
       setUser(updatedUser);
       try {
         localStorage.setItem('user', JSON.stringify(updatedUser));
-      } catch (error) {
+      } catch (error)
+        {
         console.error("Failed to access local storage:", error);
       }
     }

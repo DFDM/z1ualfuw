@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,11 +8,12 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Settings, LogOut, Bot } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Users } from 'lucide-react'; // Added Users icon
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/users', label: 'Users', icon: Users }, // Added Users page
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
