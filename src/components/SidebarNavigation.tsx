@@ -26,7 +26,7 @@ export function SidebarNavigation() {
       <SidebarMenu>
         {navItems.map((item) => (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href}>
+            <Link href={item.href} passHref> {/* Added passHref back */}
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
@@ -52,3 +52,4 @@ export function SidebarNavigation() {
     </>
   );
 }
+
