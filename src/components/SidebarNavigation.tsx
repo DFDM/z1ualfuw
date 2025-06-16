@@ -8,12 +8,12 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Settings, LogOut, Users } from 'lucide-react'; // Added Users icon
+import { LayoutDashboard, Settings, LogOut, Users } from 'lucide-react'; 
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/users', label: 'Users', icon: Users }, // Added Users page
+  { href: '/users', label: 'Users', icon: Users }, 
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -32,11 +32,10 @@ export function SidebarNavigation() {
                 isActive={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
                 tooltip={{ children: item.label, className:"bg-primary text-primary-foreground" }}
               >
-                {/* The <a> tag is rendered by Link when SidebarMenuButton has asChild */}
-                <>
+                <a> 
                   <item.icon />
                   <span>{item.label}</span>
-                </>
+                </a>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
